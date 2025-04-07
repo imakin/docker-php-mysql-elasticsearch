@@ -1,0 +1,38 @@
+FROM php:8.1.29-apache
+
+# Install dependencies and libsodium
+RUN apt-get update && apt-get install -y \
+    libsodium-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libzip-dev \
+    libicu-dev \
+    locales \
+    && apt-get clean
+
+
+# Generate the locale
+RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
+    locale-gen
+
+# Set the locale environment variable
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
+# Ensure the conf.d directory exists
+RUN mkdir -p /usr/local/etc/php/conf.d
+
+RUN docker-php-ext-install sodium
+RUN docker-php-ext-install bcmath
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+RUN docker-php-ext-install -j$(nproc) gd
+RUN docker-php-ext-install pdo_mysql
+RUN docker-php-ext-install zip
+RUN docker-php-ext-install intl
+RUN docker-php-ext-install mysqli
+
+# Enable SSL module
+RUN a2enmod ssl
+RUN a2enmod rewrite

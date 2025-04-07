@@ -1,0 +1,22 @@
+copyright 2024 (c) Izzulmakin
+2024 november
+
+how i build 
+    docker-compose up -d --build
+
+bash exec
+    docker exec -it php-apache # or
+    docker exec -it mysql
+
+get the ip address of the php-apache container
+    docker ps -q | xargs -n 1 docker inspect --format '{{.Name}} {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' | grep php-apache | awk '{print $2}'
+
+update /etc/hosts
+    sudo sed -i '/bramblemakin.com/d' /etc/hosts
+    sudo sh -c 'echo "$(docker inspect -f "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}" php-apache) bramblemakin.com" >> /etc/hosts' && cat /etc/hosts
+
+
+
+
+forward port 8443 to 443:
+    sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j DNAT --to-destination $(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' php-apache):443

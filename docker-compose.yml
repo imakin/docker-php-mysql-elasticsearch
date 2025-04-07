@@ -1,0 +1,59 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.php-apache
+    container_name: php
+    extra_hosts:
+      - "host.local:host-gateway"
+    volumes:
+      - ./sys/var/www/html:/var/www/html
+      - ./sys/etc/apache2/ssl:/etc/apache2/ssl
+      - ./sys/etc/apache2/sites-available:/etc/apache2/sites-available
+      - ./sys/opt:/opt
+      - ./sys/usr/local/etc/php:/usr/local/etc/php
+    ports:
+      - "8443:443"
+      - "8080:80"
+    environment:
+      - VIRTUAL_HOST=bramblemakin.com
+    command: >
+      bash -c "chmod +x /opt/initscript.sh && /opt/initscript.sh && apache2-foreground"
+    restart: unless-stopped
+  
+  db:
+    image: mariadb:10.6
+    container_name: mariadb
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: makin
+      MYSQL_PASSWORD: makin
+    volumes:
+      - ./sys/var/lib/mysql:/var/lib/mysql
+      - ./sys/var/www/html/db_init_makin.sql:/opt/db_init_makin.sql
+
+  elasticsearchdocker:
+    image: elasticsearch:8.12.0
+    container_name: elasticsearchdocker
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "9292:9200"
+    volumes:
+      - ./sys/usr/share/elasticsearch/data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+volumes:
+  db_data:
