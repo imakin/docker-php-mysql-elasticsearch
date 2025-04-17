@@ -34,6 +34,7 @@ services:
       MYSQL_PASSWORD: makin
     volumes:
       - ./sys/var/lib/mysql:/var/lib/mysql
+      - ./sys/opt:/opt
       - ./sys/var/www/html/db_init_makin.sql:/opt/db_init_makin.sql
 
   elasticsearchdocker:
